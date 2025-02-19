@@ -1,89 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-public class Program
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
+
+class Program
 {
-    private readonly static string _urltoTxt = "https://drive.usercontent.google.com/u/0/uc?id=1jg43arS4KIUwO0-kao_ga7PWIPWBOXxo&export=download";
-    public static async Task Main()
+    static void Main(string[] args)
     {
-        string[] txt = await GetTextFromUrl(_urltoTxt);
-       
-        if (txt != null)
-        {
-            Dictionary<string,int> countWords = new Dictionary<string,int>();
+        //  создаём пустой список с типом данных Contact
+        var phoneBook = new List<Contact>();
 
-            foreach (string word in txt)
-            {
-                if (countWords.ContainsKey(word))
-                {
-                    countWords[word]++;
-                }
-                else 
-                {
-                    countWords[word] = 1;
-                }
+        // добавляем контакты
+        phoneBook.Add(new Contact("Игорь", "Николаев", 79990000001, "igor@example.com"));
+        phoneBook.Add(new Contact("Сергей", "Довлатов", 79990000010, "serge@example.com"));
+        phoneBook.Add(new Contact("Анатолий", "Карпов", 79990000011, "anatoly@example.com"));
+        phoneBook.Add(new Contact("Валерий", "Леонтьев", 79990000012, "valera@example.com"));
+        phoneBook.Add(new Contact("Сергей", "Брин", 79990000013, "serg@example.com"));
+        phoneBook.Add(new Contact("Иннокентий", "Смоктуновский", 79990000013, "innokentii@example.com"));
 
-            }
+        var contactSortedbyName = phoneBook.OrderBy(contact => contact.Name);
+        var contactSortedbyLastName = phoneBook.OrderBy(contact => contact.LastName);
+        var cotactSortedbyNameAndLastName = phoneBook.OrderBy(contact => contact.Name).ThenBy(contact => contact.LastName);
 
-            //оказалось,это сортировка очень медленная
-            //countWords = SortDicByDescending(countWords);
+        var contactSortedbyNameLinQ = from contact in phoneBook orderby contact.Name select contact;
+        var contactSortedbyLastNameLinQ = from contact in phoneBook orderby contact.LastName select contact;
+        var contactSortedbyNameAndLastNameLinQ = from contact in phoneBook orderby contact.Name, contact.LastName select contact;
 
-            countWords = countWords.OrderByDescending (x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine($"{countWords.ElementAt(i).Key} : {countWords.ElementAt(i).Value}");
-            }
-            
-        }
+        PrintContacts(contactSortedbyName);
+        PrintContacts(contactSortedbyLastName);
+        PrintContacts(cotactSortedbyNameAndLastName);
 
-        Console.ReadLine();
+        PrintContacts(contactSortedbyNameLinQ);
+        PrintContacts(contactSortedbyLastNameLinQ);
+        PrintContacts(contactSortedbyNameAndLastNameLinQ);
+
+
     }
 
-    private static async Task<string[]> GetTextFromUrl(string url)
+    static void PrintContacts(IEnumerable<Contact> contacts, [CallerArgumentExpression("contacts")] string contactsName="")
     {
-        try
+        Console.WriteLine(contactsName+"\n");
+
+        foreach (var contact in contacts)
         {
-            using (HttpClient httpClient = new HttpClient())
-            {
-                string txtTemp = await httpClient.GetStringAsync(url);
-                if (txtTemp != null)
-                {
-                    var noPunctuationText = new string(txtTemp.Where(c => !char.IsPunctuation(c)).ToArray()).ToLower();
-
-                    return noPunctuationText.Split(" ",StringSplitOptions.RemoveEmptyEntries);
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            Console.WriteLine($"===>{contact.Name} {contact.LastName} {contact.PhoneNumber} {contact.Email}");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return null;
-        }
-    }
-
-    private static Dictionary<string, int> SortDicByDescending(Dictionary<string, int> dic)
-    {
-        var list = dic.ToList();
-
-        for (int i = 0; i < list.Count - 1; i++)
-        {
-            for (int j = 0; j < list.Count - 1 - i; j++)
-            {
-                if (list[j].Value < list[j + 1].Value)
-                {
-                    var temp = list[j];
-                    list[j] = list[j + 1];
-                    list[j + 1] = temp;
-                }
-            }
-        }
-
-        
-        return list.ToDictionary(x => x.Key, x => x.Value);
+        Console.WriteLine("\n\n");
     }
 }
+
+public class Contact // модель класса
+{
+    public Contact(string name, string lastName, long phoneNumber, String email) // метод-конструктор
+    {
+        Name = name;
+        LastName = lastName;
+        PhoneNumber = phoneNumber;
+        Email = email;
+    }
+
+    public String Name { get; }
+    public String LastName { get; }
+    public long PhoneNumber { get; }
+    public String Email { get; }
+}
+
